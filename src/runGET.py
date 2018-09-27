@@ -1,32 +1,6 @@
 import urllib2
 import re
 
-''' POST
-url = 'http://www.someserver.com/cgi-bin/register.cgi'
-values = {'name' : 'Michael Foord',
-          'location' : 'Northampton',
-          'language' : 'Python' }
-
-data = urllib.urlencode(values)
-req = urllib2.Request(url, data)
-response = urllib2.urlopen(req)
-the_page = response.read()
-'''
-'''
-data = {}
-data['name'] = 'Somebody Here'
-data['location'] = 'Northampton'
-data['language'] = 'Python'
-url_values = urllib.urlencode(data)
-print url_values  # The order may differ.
-name=Somebody+Here&language=Python&location=Northampton
-url = 'http://www.example.com/example.cgi'
-full_url = url + '?' + url_values
-data = urllib2.urlopen(full_url)
-
-'''
-
-
 def check_field_loger_online(url):
     status = '{}/status.php'.format(url)
     rqt = urllib2.urlopen(status)
@@ -39,6 +13,7 @@ def get_status_field_loger(url):
     rqt = urllib2.urlopen(status)
     contents = rqt.read()
     if ("Serial Number" in contents):
+        contents = contents.replace("Value</th></tr> ", "Value</th></tr>\n")
         contents = contents.split("\n")
         contents.pop()
         contents.pop(0)
@@ -89,11 +64,24 @@ def get_meter_field_loger(url):
 
 
 if __name__ == "__main__":
-    url = 'http://localhost:8000'
 
-    lista = get_status_field_loger(url)
-    lista = get_meter_field_loger(url)
-    for item in lista:
-        print "'{}' => {}".format(item, lista[item])
+    urls = [
+        'localhost:8000']
+    for ip in urls:
+        url = "http://{}".format(ip)
+        try:
+            if check_field_loger_online(url):
+                status = get_status_field_loger(url)
+                print("SN: {};\tTAG: {};\tFirmware_Version: {};\tIP: {};".format(
+                    status['Serial Number'],
+                    status['Tag'],
+                    status['Firmware Version'],
+                    ip))
 
-    print check_field_loger_online(url)
+        except urllib2.URLError as ex:
+            print "msg: {}\tIP: {}".format(ex, ip)
+
+        except Exception as ex:
+            print type(ex)
+            print ex
+
